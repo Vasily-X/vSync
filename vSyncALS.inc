@@ -1,6 +1,10 @@
 /*
-	vSync wrote by RIDE2DAY, based on vFunc by MP2.
-	Official thread: http://forum.sa-mp.com/showthread.php?t=642022
+	vSync v0.02 wrote by RIDE2DAY
+        Official thread: http://forum.sa-mp.com/showthread.php?t=642022
+
+        Many thanks to:
+    	    - MP2
+    	    - JernejL
 */
 
 // ================================== [DEFINITIONS] ================================== //
