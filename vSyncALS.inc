@@ -1423,7 +1423,7 @@ stock GetVehicleMaxSpeed(modelid)
 	return 0;
 }
 
-stock Float:GetVehicleWeight(modelid)
+stock Float:GetVehicleMass(modelid)
 {
 	if(400 <= modelid <= 611)
 	{
