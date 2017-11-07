@@ -1049,7 +1049,7 @@ hook OnPlayerConnect(playerid)
 {
 	Bit_Vet(vSync_pInsideModShop, playerid);
 	Bit_Vet(vSync_pBuyingPaintjob, playerid);
-	return 1;
+	return Y_HOOKS_CONTINUE_RETURN_1;
 }
 
 hook OnPlayerUpdate(playerid)
@@ -1072,7 +1072,7 @@ hook OnPlayerUpdate(playerid)
        		}
         }
     }
-    return 1;
+    return Y_HOOKS_CONTINUE_RETURN_1;
 }
 
 hook OnPlayerKeyStateChange(playerid, newkeys, oldkeys)
@@ -1096,7 +1096,7 @@ hook OnPlayerKeyStateChange(playerid, newkeys, oldkeys)
 			Bit_Vet(vSync_pBuyingPaintjob, playerid);
 		}
 	}
-	return 1;
+	return Y_HOOKS_CONTINUE_RETURN_1;
 }
 
 hook OnEnterExitModShop(playerid, enterexit, interiorid)
@@ -1154,19 +1154,19 @@ hook OnVehiclePaintjob(playerid, vehicleid, paintjobid)
 		vSync_pPaintjobID{playerid} = paintjobid;
 		Bit_Let(vSync_pBuyingPaintjob, playerid);
 	}
-	return 1;
+	return Y_HOOKS_CONTINUE_RETURN_1;
 }
 
 hook OnVehicleRespray(playerid, vehicleid, color1, color2)
 {
 	if(Bit_Get(vSync_pInsideModShop, playerid) || (color1 == vSync_gVehicleInternal[vehicleid - 1][vSync_Color1] && color2 == vSync_gVehicleInternal[vehicleid - 1][vSync_Color2] && !IsPlayerInsidePNS(playerid)))
 	{
-		return -1;
+		return Y_HOOKS_BREAK_RETURN_0;
 	}
 
 	vSync_gVehicleInternal[vehicleid - 1][vSync_Color1] = color1;
 	vSync_gVehicleInternal[vehicleid - 1][vSync_Color2] = color2;
-	return 1;
+	return Y_HOOKS_CONTINUE_RETURN_1;
 }
 
 hook OnVehicleSpawn(vehicleid)
@@ -1180,7 +1180,7 @@ hook OnVehicleSpawn(vehicleid)
 	vSync_gVehicleInternal[vehicleid - 1][vSync_Bullbars][1] = 0;
 
 	ChangeVehicleColor(vehicleid, vSync_gVehicleInternal[vehicleid - 1][vSync_OrgCol1], vSync_gVehicleInternal[vehicleid - 1][vSync_OrgCol2]);
-	return 1;
+	return Y_HOOKS_CONTINUE_RETURN_1;
 }
 
 hook OnVehicleMod(playerid, vehicleid, componentid)
