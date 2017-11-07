@@ -34,7 +34,6 @@
 #define CARMODTYPE_FRONT_BULLBAR 	14
 #define CARMODTYPE_REAR_BULLBAR 	15
 
-#define VehicleSupportsNitro(%0)	(vSync_VehicleInfo[%0 - 400][Nitro])
 #define IsComponentRearBullbar(%0)	(%0 == 1109 || %0 == 1110)
 
 forward OnVehicleCreated(vehicleid);
@@ -1551,6 +1550,15 @@ stock GetVehicleNeonLightsState(vehicleid)
 				return 1;
 			}
 		#endif
+	}
+	return 0;
+}
+
+stock VehicleSupportsNitro(modelid)
+{
+	if(400 <= modelid <= 611)
+	{
+		return vSync_VehicleInfo[modelid - 400][Nitro];
 	}
 	return 0;
 }
