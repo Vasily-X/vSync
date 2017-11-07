@@ -1230,18 +1230,6 @@ stock GetVehicleName(vehicleid, name[], len = sizeof(name))
 	return strlen(name);
 }
 
-stock GetVehicleWindows(vehicleid)
-{
-	new m_id = GetVehicleModel(vehicleid);
-
-	if(m_id)
-	{
-		return vSync_VehicleInfo[m_id - 400][Windows];
-	}
-
-	return 0;
-}
-
 stock GetVehicleColor(vehicleid, &color1, &color2)
 {
 	if(1 <= vehicleid <= MAX_VEHICLES)
@@ -1297,6 +1285,16 @@ stock GetVehicleSeats(modelid)
 	}
 	return -1;
 }
+
+stock GetVehicleWindows(modelid)
+{
+	if(400 <= modelid <= 611)
+	{
+		return vSync_VehicleInfo[m_id - 400][Windows];
+	}
+	return 0;
+}
+
 
 stock GetVehicleMaxSpeed(modelid)
 {
