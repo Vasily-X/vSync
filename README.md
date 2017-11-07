@@ -10,6 +10,7 @@ This include contains some bug fixes and new vehicle related functions.
 - Vehicles won't change their color to white anymore when a paintjob is removed.
 - Bullbar components won't use anymore the same slots as front/rear bumpers (`GetVehicleComponentInSlot`).
 - Now `GetVehicleComponentInSlot` works correctly when checking the `CARMODTYPE_STEREO` slot.
+- Players won't crash anymore if someone tries to add an invalid component to a vehicle.
 
 ## New Features
 - Now Pay 'n' Spray shops apply random colors and call `OnVehicleRespray`.
