@@ -8,6 +8,12 @@
 */
 
 
+#if defined _vsync_included
+	#endinput
+#endif
+#define _vsync_included
+
+
 // ================================== [DEFINITIONS] ================================== //
 #if !defined isodd
 	#define isodd(%1)				((%1) & 1)

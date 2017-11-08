@@ -7,6 +7,13 @@
     	- JernejL
 */
 
+
+#if defined _vsync_included
+	#endinput
+#endif
+#define _vsync_included
+
+
 #include <YSI-Includes\YSI\y_bit>
 #include <YSI-Includes\YSI\y_iterate>
 #include <YSI-Includes\YSI\y_hooks>
