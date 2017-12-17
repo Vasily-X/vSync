@@ -14,9 +14,10 @@
 #define _vsync_included
 
 
-#include <YSI-Includes\YSI\y_bit>
-#include <YSI-Includes\YSI\y_iterate>
-#include <YSI-Includes\YSI\y_hooks>
+#include <a_samp>
+#include <YSI\y_bit>
+#include <YSI\y_iterate>
+#include <YSI\y_hooks>
 
 // ================================== [DEFINITIONS] ================================== //
 #if !defined isodd
