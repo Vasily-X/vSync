@@ -12,7 +12,7 @@ This include contains some bug fixes and new vehicle related functions.
 - Now `GetVehicleComponentInSlot` works correctly when checking the `CARMODTYPE_STEREO` slot.
 - Players won't crash anymore if someone tries to add an invalid component to a vehicle.
 
-## New Features
+## Features
 - Now Pay 'n' Spray shops apply random colors and call `OnVehicleRespray`.
 - Now `ChangeVehicleColor` applies random colors when using `-1` for the color parameters.
 - When using random colors, vehicles get their own colors, those used single player.
