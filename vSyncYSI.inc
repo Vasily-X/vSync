@@ -13,10 +13,10 @@
 #endif
 #define _vsync_included
 
+#include <a_samp>
+#include <YSI\y_iterate>
+#include <YSI\y_hooks>
 
-#include <YSI-Includes\YSI\y_bit>
-#include <YSI-Includes\YSI\y_iterate>
-#include <YSI-Includes\YSI\y_hooks>
 
 // ================================== [DEFINITIONS] ================================== //
 #if !defined isodd
@@ -38,7 +38,7 @@
 #define	NEON_LIGHT_PINK 			18651
 #define NEON_LIGHT_WHITE			18652
 
-#define MAX_VEHICLE_NAME			31
+#define MAX_VEHICLE_NAME			27
 #define MAX_VEHICLE_NUMBERPLATE		32
 #define INVALID_PAINTJOB_ID 		3
 #define CARMODTYPE_FRONT_BULLBAR 	14
@@ -52,10 +52,22 @@ forward OnVehicleChangePaintjob(playerid, vehicleid, paintjobid);
 
 // ================================== [VARIABLES] ================================== //
 static vSync_pTick[MAX_PLAYERS];
-static vSync_pPaintjobID[MAX_PLAYERS char];
+static vSync_pPaintjobID[MAX_PLAYERS];
+static vSync_PaySprayTick[MAX_PLAYERS];
 
-static BitArray:vSync_pInsideModShop<MAX_PLAYERS>;
-static BitArray:vSync_pBuyingPaintjob<MAX_PLAYERS>;
+static bool:vSync_pInsideModShop[MAX_PLAYERS];
+static bool:vSync_pBuyingPaintjob[MAX_PLAYERS];
+
+enum vSync_VehicleParams
+{
+    VEHICLE_TYPE_ENGINE,
+    VEHICLE_TYPE_LIGHTS,
+    VEHICLE_TYPE_ALARM,
+    VEHICLE_TYPE_DOORS,
+    VEHICLE_TYPE_BONNET,
+    VEHICLE_TYPE_BOOT,
+    VEHICLE_TYPE_OBJECTIVE
+}
 
 enum vSync_Internal_Data
 {
@@ -1007,19 +1019,19 @@ stock vSync_RemoveVehicleComponent(vehicleid, componentid)
 			}
 			case CARMODTYPE_FRONT_BUMPER:
 			{
-				vSync_gVehicleInternal[vehicleid - 1][vSync_Bumpers][0];
+				vSync_gVehicleInternal[vehicleid - 1][vSync_Bumpers][0] = 0;
 			}
 			case CARMODTYPE_REAR_BUMPER:
 			{
-				vSync_gVehicleInternal[vehicleid - 1][vSync_Bumpers][1];
+				vSync_gVehicleInternal[vehicleid - 1][vSync_Bumpers][1] = 0;
 			}
 			case CARMODTYPE_FRONT_BULLBAR:
 			{
-				vSync_gVehicleInternal[vehicleid - 1][vSync_Bullbars][0];
+				vSync_gVehicleInternal[vehicleid - 1][vSync_Bullbars][0] = 0;
 			}
 			case CARMODTYPE_REAR_BULLBAR:
 			{
-				vSync_gVehicleInternal[vehicleid - 1][vSync_Bullbars][1];
+				vSync_gVehicleInternal[vehicleid - 1][vSync_Bullbars][1] = 0;
 			}
 		}
 		return RemoveVehicleComponent(vehicleid, componentid);
@@ -1038,6 +1050,15 @@ stock vSync_DestroyVehicle(vehicleid)
 	if(1 <= vehicleid <= MAX_VEHICLES)
 	{
 		SetVehicleNeonLights(vehicleid, false);
+
+		vSync_gVehicleInternal[vehicleid - 1][vSync_Stereo] = 0;
+
+		vSync_gVehicleInternal[vehicleid - 1][vSync_Bumpers][0] = 0;
+		vSync_gVehicleInternal[vehicleid - 1][vSync_Bumpers][1] = 0;
+
+		vSync_gVehicleInternal[vehicleid - 1][vSync_Bullbars][0] = 0;
+		vSync_gVehicleInternal[vehicleid - 1][vSync_Bullbars][1] = 0;
+
 		return DestroyVehicle(vehicleid);
 	}
 	return 0;
@@ -1053,8 +1074,8 @@ stock vSync_DestroyVehicle(vehicleid)
 // ================================== [HOOKED CALLBACKS] ================================== //
 hook OnPlayerConnect(playerid)
 {
-	Bit_Vet(vSync_pInsideModShop, playerid);
-	Bit_Vet(vSync_pBuyingPaintjob, playerid);
+	vSync_pInsideModShop[playerid] = false;
+	vSync_pBuyingPaintjob[playerid] = false;
 	return Y_HOOKS_CONTINUE_RETURN_1;
 }
 
@@ -1067,11 +1088,13 @@ hook OnPlayerUpdate(playerid)
 
         GetVehicleHealth(vehicleid, v_health);
 
-        if(v_health >= 1000.0)
+        if(v_health >= 1000.0 && (gettime() - vSync_PaySprayTick[playerid]) >= 1)
         {
             SetVehicleHealth(vehicleid, 999.0);
 
-           	if(IsPlayerInsidePNS(playerid))
+            vSync_PaySprayTick[playerid] = gettime();
+
+           	if(IsPlayerInsidePaySpray(playerid))
            	{
            		ChangeVehicleColor(vehicleid, -1, -1);
        			CallLocalFunction("OnVehicleRespray", "dddd", playerid, vehicleid, vSync_gVehicleInternal[vehicleid - 1][vSync_Color1], vSync_gVehicleInternal[vehicleid - 1][vSync_Color2]);
@@ -1085,21 +1108,22 @@ hook OnPlayerKeyStateChange(playerid, newkeys, oldkeys)
 {
 	if(RELEASED(KEY_SPRINT))
 	{
-		if(GetPlayerState(playerid) == PLAYER_STATE_DRIVER && Bit_Get(vSync_pBuyingPaintjob, playerid) && GetTickDiff(GetTickCount(), vSync_pTick[playerid]) > 50 && GetPlayerMoney(playerid) >= 500)
+		if(GetPlayerState(playerid) == PLAYER_STATE_DRIVER && vSync_pBuyingPaintjob[playerid] && GetTickDiff(GetTickCount(), vSync_pTick[playerid]) > 50 && GetPlayerMoney(playerid) >= 500)
 		{
 			new vehicleid = GetPlayerVehicleID(playerid);
 
-			Bit_Vet(vSync_pBuyingPaintjob, playerid);
+			vSync_pBuyingPaintjob[playerid] = false;
 
-			vSync_gVehicleInternal[vehicleid - 1][vSync_Paintjob] = vSync_pPaintjobID{playerid};
-			CallLocalFunction("OnVehicleChangePaintjob", "ddd", playerid, vehicleid, vSync_pPaintjobID{playerid});
+			vSync_gVehicleInternal[vehicleid - 1][vSync_Paintjob] = vSync_pPaintjobID[playerid];
+
+			CallLocalFunction("OnVehicleChangePaintjob", "ddd", playerid, vehicleid, vSync_pPaintjobID[playerid]);
 		}
 	}
 	else if(RELEASED(KEY_SECONDARY_ATTACK))
 	{
-		if(GetPlayerState(playerid) == PLAYER_STATE_DRIVER && Bit_Get(vSync_pBuyingPaintjob, playerid))
+		if(GetPlayerState(playerid) == PLAYER_STATE_DRIVER && vSync_pBuyingPaintjob[playerid])
 		{
-			Bit_Vet(vSync_pBuyingPaintjob, playerid);
+			vSync_pBuyingPaintjob[playerid] = false;
 		}
 	}
 	return Y_HOOKS_CONTINUE_RETURN_1;
@@ -1113,7 +1137,8 @@ hook OnEnterExitModShop(playerid, enterexit, interiorid)
 
 	if(enterexit)
 	{
-		Bit_Let(vSync_pInsideModShop, playerid);
+		vSync_pInsideModShop[playerid] = true;
+
 		SetVehicleVirtualWorld(vehicleid, playerid);
 
 		foreach(new x : Player)
@@ -1132,7 +1157,8 @@ hook OnEnterExitModShop(playerid, enterexit, interiorid)
 	}
 	else
 	{
-		Bit_Vet(vSync_pInsideModShop, playerid);
+		vSync_pInsideModShop[playerid] = false;
+
 		SetVehicleVirtualWorld(vehicleid, 0);
 
 		foreach(new x : Player)
@@ -1157,21 +1183,22 @@ hook OnVehiclePaintjob(playerid, vehicleid, paintjobid)
 	if(paintjobid <= 2 && paintjobid != vSync_gVehicleInternal[vehicleid - 1][vSync_Paintjob])
 	{
 		vSync_pTick[playerid] = GetTickCount();
-		vSync_pPaintjobID{playerid} = paintjobid;
-		Bit_Let(vSync_pBuyingPaintjob, playerid);
+		vSync_pPaintjobID[playerid] = paintjobid;
+		vSync_pBuyingPaintjob[playerid] = true;
 	}
 	return Y_HOOKS_CONTINUE_RETURN_1;
 }
 
 hook OnVehicleRespray(playerid, vehicleid, color1, color2)
 {
-	if(Bit_Get(vSync_pInsideModShop, playerid) || (color1 == vSync_gVehicleInternal[vehicleid - 1][vSync_Color1] && color2 == vSync_gVehicleInternal[vehicleid - 1][vSync_Color2] && !IsPlayerInsidePNS(playerid)))
+	if(vSync_pInsideModShop[playerid] || (color1 == vSync_gVehicleInternal[vehicleid - 1][vSync_Color1] && color2 == vSync_gVehicleInternal[vehicleid - 1][vSync_Color2] && !IsPlayerInsidePaySpray(playerid)))
 	{
 		return Y_HOOKS_BREAK_RETURN_0;
 	}
 
 	vSync_gVehicleInternal[vehicleid - 1][vSync_Color1] = color1;
 	vSync_gVehicleInternal[vehicleid - 1][vSync_Color2] = color2;
+	
 	return Y_HOOKS_CONTINUE_RETURN_1;
 }
 
@@ -1297,11 +1324,10 @@ stock GetVehicleWindows(modelid)
 {
 	if(400 <= modelid <= 611)
 	{
-		return vSync_VehicleInfo[m_id - 400][Windows];
+		return vSync_VehicleInfo[modelid - 400][Windows];
 	}
 	return 0;
 }
-
 
 stock GetVehicleMaxSpeed(modelid)
 {
@@ -1487,9 +1513,24 @@ stock VehicleSupportsComponent(modelid, componentid)
 	return 0;
 }
 
+stock SetVehicleParams(vehicleid, vSync_VehicleParams:type, bool:status)
+{
+	new params[7];
+	GetVehicleParamsEx(vehicleid, params[0], params[1], params[2], params[3], params[4], params[5], params[6]);
+	params[type] = status;
+	SetVehicleParamsEx(vehicleid, params[0], params[1], params[2], params[3], params[4], params[5], params[6]);
+}
+
+stock GetVehicleParams(vehicleid, vSync_VehicleParams:type)
+{
+	new params[7];
+	GetVehicleParamsEx(vehicleid, params[0], params[1], params[2], params[3], params[4], params[5], params[6]);
+	return (!(params[type] <= 0));
+}
+
 
 // ================================== [OTHER FUNCTIONS] ================================== //
-stock IsPlayerInsidePNS(playerid)
+stock IsPlayerInsidePaySpray(playerid)
 {
 	for(new i = 0; i < sizeof(vSync_gPaynSprayPos); i++)
     {
