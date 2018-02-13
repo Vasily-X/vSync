@@ -16,12 +16,7 @@
 #include <a_samp>
 #include <YSI\y_iterate>
 #include <YSI\y_hooks>
-
-<<<<<<< HEAD
-#include <a_samp>
-#include <YSI\y_iterate>
-#include <YSI\y_hooks>
->>>>>>> origin/master
+    	
 
 // ================================== [DEFINITIONS] ================================== //
 #if !defined isodd
