@@ -16,7 +16,6 @@
 #include <a_samp>
 
 
-#include <a_samp>
 
 // ================================== [DEFINITIONS] ================================== //
 #if !defined isodd
