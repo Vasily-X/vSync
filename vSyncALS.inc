@@ -1101,7 +1101,7 @@ public OnPlayerUpdate(playerid)
 
         GetVehicleHealth(vehicleid, v_health);
 
-        if(v_health >= 1000.0 (gettime() - vSync_PaySprayTick[playerid]) >= 1)
+        if(v_health >= 1000.0 && (gettime() - vSync_PaySprayTick[playerid]) >= 1)
         {
             SetVehicleHealth(vehicleid, 999.0);
 
