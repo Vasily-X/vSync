@@ -1,5 +1,5 @@
 /*
-    vSync v0.02 wrote by RIDE2DAY
+    vSync v0.03 wrote by RIDE2DAY
     Official thread: http://forum.sa-mp.com/showthread.php?t=642022
 
     Many thanks to:
@@ -1101,7 +1101,7 @@ public OnPlayerUpdate(playerid)
 
         GetVehicleHealth(vehicleid, v_health);
 
-        if(v_health >= 1000.0 (gettime() - vSync_PaySprayTick[playerid]) >= 1)
+        if(v_health >= 1000.0 && (gettime() - vSync_PaySprayTick[playerid]) >= 1)
         {
             SetVehicleHealth(vehicleid, 999.0);
 
