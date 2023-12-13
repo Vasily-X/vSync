@@ -1,22 +1,27 @@
 /*
-    vSync v0.03 wrote by RIDE2DAY
-    Official thread: http://forum.sa-mp.com/showthread.php?t=642022
+    vSync v1.0 originally written by RIDE2DAY
+    Forked, fixed, improved and updated by SICARIO
 
-    Many thanks to:
+	* Ported to open.mp.
+	* Compatible to latest version of YSI includes.
+	* Fixed weak and non-working parameters.
+	* Improved synchronization.
+	* Added vehicle mod data and prices.
+	* Many others. Just discover it.
+
+    Special thanks to:
     	- MP2
     	- JernejL
 */
-
 
 #if defined _vsync_included
 	#endinput
 #endif
 #define _vsync_included
 
-#include <a_samp>
-#include <YSI\y_iterate>
-#include <YSI\y_hooks>
-    	
+#include <open.mp>
+#include <YSI_Coding\y_iterate>
+#include <YSI_Coding\y_hooks>
 
 // ================================== [DEFINITIONS] ================================== //
 #if !defined isodd
@@ -41,8 +46,8 @@
 #define MAX_VEHICLE_NAME			27
 #define MAX_VEHICLE_NUMBERPLATE		32
 #define INVALID_PAINTJOB_ID 		3
-#define CARMODTYPE_FRONT_BULLBAR 	14
-#define CARMODTYPE_REAR_BULLBAR 	15
+//#define CARMODTYPE_FRONT_BULLBAR 	14
+//#define CARMODTYPE_REAR_BULLBAR 	15
 
 #define IsComponentRearBullbar(%0)	(%0 == 1109 || %0 == 1110)
 
@@ -58,8 +63,7 @@ static vSync_PaySprayTick[MAX_PLAYERS];
 static bool:vSync_pInsideModShop[MAX_PLAYERS];
 static bool:vSync_pBuyingPaintjob[MAX_PLAYERS];
 
-enum vSync_VehicleParams
-{
+enum vSync_VehicleParams {
     VEHICLE_TYPE_ENGINE,
     VEHICLE_TYPE_LIGHTS,
     VEHICLE_TYPE_ALARM,
@@ -69,8 +73,7 @@ enum vSync_VehicleParams
     VEHICLE_TYPE_OBJECTIVE
 }
 
-enum vSync_Internal_Data
-{
+enum vSync_Internal_Data {
 	vSync_Color1,
 	vSync_Color2,
 	vSync_OrgCol1,
@@ -86,8 +89,7 @@ enum vSync_Internal_Data
 }
 static vSync_gVehicleInternal[MAX_VEHICLES][vSync_Internal_Data];
 		
-enum vSync_Vehicle_Info
-{
+enum vSync_Vehicle_Info {
 	Name[MAX_VEHICLE_NAME],
 	Seats,
 	Windows,
@@ -100,6 +102,7 @@ enum vSync_Vehicle_Info
 	Float:NeonOffsetY,
     Float:NeonOffsetZ
 }
+
 static const vSync_VehicleInfo[212][vSync_Vehicle_Info] = {
 	{"Landstalker", 4, 4, 1700.0, '4', 'D', 159, true, -0.924996, 0.009998, -0.674996},
 	{"Bravura", 2, 2, 1300.0, 'F', 'P', 148, true, -0.979999, 0.074997, -0.489998},
@@ -582,6 +585,209 @@ static const vSync_LegalMods[49][15] = {
 	{603, 1145, 1144, 1143, 1142, 1024, 1023, 1020, 1019, 1018, 1017, 1007, 1006, 1001}
 };
 
+enum componentData {
+	componentID,
+	componentName[64],
+	componentPrice
+};
+
+static const vSync_Components[][componentData] = {
+	{1000, "Pro Spoiler", 400},
+	{1001, "Win Spoiler", 550},
+	{1002, "Drag Spoiler", 200},
+	{1003, "Alpha Spoiler", 250},
+	{1004, "Champ Scoop", 100},
+	{1005, "Fury Scoop", 150},
+	{1006, "Roof Scoop", 80},
+	{1007, "Right Sideskirt", 500},
+	{1008, "5x Nitro", 500},
+	{1009, "2x Nitro", 200},
+	{1010, "10x Nitro", 1000},
+	{1011, "Race Scoop", 220},
+	{1012, "Worx Scoop", 250},
+	{1013, "Round Fog", 100},
+	{1014, "Champ Spoiler", 400},
+	{1015, "Race Spoiler", 500},
+	{1016, "Worx Spoiler", 200},
+	{1017, "Left Sideskirt", 500},
+	{1018, "Upswept Exhaust", 350},
+	{1019, "Twin Exhaust", 300},
+	{1020, "Large Exhaust", 250},
+	{1021, "Medium Exhaust", 200},
+	{1022, "Small Exhaust", 150},
+	{1023, "Fury Spoiler", 350},
+	{1024, "Square Fog", 50},
+	{1025, "Offroad Wheels", 1000},
+	{1026, "Right Alien Sideskirt", 480},
+	{1027, "Left Alien Sideskirt", 480},
+	{1028, "Alien Exhaust", 770},
+	{1029, "X-Flow Exhaust", 680},
+	{1030, "Left X-Flow Sideskirt", 370},
+	{1031, "Right X-Flow Sideskirt", 370},
+	{1032, "Alien Roof Vent", 170},
+	{1033, "X-Flow Roof Vent", 120},
+	{1034, "Alien Exhaust", 790},
+	{1035, "X-Flow Roof Vent", 150},
+	{1036, "Right Alien Sideskirt", 500},
+	{1037, "X-Flow Exhaust", 690},
+	{1038, "Alien Roof Vent", 190},
+	{1039, "Left X-Flow Sideskirt", 390},
+	{1040, "Left Alien Sideskirt", 500},
+	{1041, "Right X-Flow Sideskirt", 390},
+	{1042, "Right Chrome Sideskirt", 1000},
+	{1043, "Slamin Exhaust", 500},
+	{1044, "Chrome Exhaust", 500},
+	{1045, "X-Flow Exhaust", 510},
+	{1046, "Alien Exhaust", 710},
+	{1047, "Right Alien Sideskirt", 670},
+	{1048, "Right X-Flow Sideskirt", 530},
+	{1049, "Alien Spoiler", 810},
+	{1050, "X-Flow Spoiler", 620},
+	{1051, "Left Alien Sideskirt", 670},
+	{1052, "Left X-Flow Sideskirt", 530},
+	{1053, "Roof X-Flow", 130},
+	{1054, "Roof Alien", 210},
+	{1055, "Roof Alien", 230},
+	{1056, "Right Alien Sideskirt", 520},
+	{1057, "Right X-Flow Sideskirt", 430},
+	{1058, "Alien Spoiler", 620},
+	{1059, "X-Flow Exhaust", 720},
+	{1060, "X-Flow Spoiler", 530},
+	{1061, "Roof X-Flow", 180},
+	{1062, "Left Alien Sideskirt", 550},
+	{1063, "Left X-Flow Sideskirt", 430},
+	{1064, "Alien Exhaust", 830},
+	{1065, "Alien Exhaust", 850},
+	{1066, "X-Flow Exhaust", 750},
+	{1067, "Roof Alien", 250},
+	{1068, "Roof X-Flow", 200},
+	{1069, "Right Alien Sideskirt", 550},
+	{1070, "Right X-Flow Sideskirt", 450},
+	{1071, "Left Alien Sideskirt", 550},
+	{1072, "Left X-Flow Sideskirt", 450},
+	{1073, "Shadow Wheels", 1100},
+	{1074, "Mega Wheels", 1030},
+	{1075, "Rimshine Wheels", 980},
+	{1076, "Wires Wheels", 1560},
+	{1077, "Classic Wheels", 1620},
+	{1078, "Twist Wheels", 1200},
+	{1079, "Cutter Wheels", 1030},
+	{1080, "Switch Wheels", 900},
+	{1081, "Grove Wheels", 1230},
+	{1082, "Import Wheels", 820},
+	{1083, "Dollar Wheels", 1560},
+	{1084, "Trance Wheels", 1350},
+	{1085, "Atomic Wheels", 770},
+	{1086, "Stereo Stereo", 100},
+	{1087, "Hydraulics", 1500},
+	{1088, "Roof Alien", 150},
+	{1089, "X-Flow Exhaust", 650},
+	{1090, "Right Alien Sideskirt", 450},
+	{1091, "Roof X-Flow", 100},
+	{1092, "Alien Exhaust", 750},
+	{1093, "Right X-Flow Sideskirt", 350},
+	{1094, "Left Alien Sideskirt", 450},
+	{1095, "Right X-Flow Sideskirt", 350},
+	{1096, "Ahab Wheels", 1000},
+	{1097, "Virtual Wheels", 620},
+	{1098, "Access Wheels", 1140},
+	{1099, "Left Chrome Sideskirt", 1000},
+	{1100, "Chrome Bullbar Grill", 940},
+	{1101, "Left Chrome Flames Sideskirt", 780},
+	{1102, "Left Chrome Strip Sideskirt", 830},
+	{1103, "Convertible Roof", 3250},
+	{1104, "Chrome Exhaust", 1610},
+	{1105, "Slamin Exhaust", 1540},
+	{1106, "Right Chrome Arches Sideskirt", 780},
+	{1107, "Left Chrome Strip Sideskirt", 780},
+	{1108, "Right Chrome Strip Sideskirt", 780},
+	{1109, "Chrome Bullbars", 1610},
+	{1110, "Slamin Bullbars", 1540},
+	{1111, "Little Sign", 0},
+	{1112, "Little Sign", 0},
+	{1113, "Chrome Exhaust", 3340},
+	{1114, "Slamin Exhaust", 3250},
+	{1115, "Front Chrome Bullbars", 2130},
+	{1116, "Front Slamin Bullbars", 2050},
+	{1117, "Front Chrome Bumper", 2040},
+	{1118, "Right Chrome Trim Sideskirt", 780},
+	{1119, "Right Wheelcovers Sideskirt", 940},
+	{1120, "Left Chrome Trim Sideskirt", 780},
+	{1121, "Left Wheelcovers Sideskirt", 940},
+	{1122, "Right Chrome Flames Sideskirt", 780},
+	{1123, "Chrome Bars", 860},
+	{1124, "Left Chrome Arches Sideskirt", 780},
+	{1125, "Chrome Bullbar Lights", 1120},
+	{1126, "Chrome Exhaust", 3340},
+	{1127, "Slamin Exhaust", 3250},
+	{1128, "Vinyl Hardtop Roof", 3340},
+	{1129, "Chrome Exhaust", 1650},
+	{1130, "Hardtop Roof", 3380},
+	{1131, "Softtop Roof", 3290},
+	{1132, "Slamin Exhaust", 1590},
+	{1133, "Right Chrome Strip Sideskirt", 830},
+	{1134, "Right Chrome Strip Sideskirt", 800},
+	{1135, "Slamin Exhaust", 1500},
+	{1136, "Chrome Exhaust", 1000},
+	{1137, "Left Chrome Strip Sideskirt", 800},
+	{1138, "Alien Spoiler", 580},
+	{1139, "X-Flow Spoiler", 470},
+	{1140, "Rear X-Flow Bumper", 870},
+	{1141, "Rear Alien Bumper", 980},
+	{1142, "Left Oval Vents", 150},
+	{1143, "Right Oval Vents", 150},
+	{1144, "Left Square Vents", 100},
+	{1145, "Right Square Vents", 100},
+	{1146, "X-Flow Spoiler", 490},
+	{1147, "Alien Spoiler", 600},
+	{1148, "Rear X-Flow Bumper", 890},
+	{1149, "Rear Alien Bumper", 1000},
+	{1150, "Rear Alien Bumper", 1090},
+	{1151, "Rear X-Flow Bumper", 840},
+	{1152, "Front X-Flow Bumper", 910},
+	{1153, "Front Alien Bumper", 1200},
+	{1154, "Rear Alien Bumper", 1030},
+	{1155, "Front Alien Bumper", 1030},
+	{1156, "Rear X-Flow Bumper", 920},
+	{1157, "Front X-Flow Bumper", 930},
+	{1158, "X-Flow Spoiler", 550},
+	{1159, "Rear Alien Bumper", 1050},
+	{1160, "Front Bumper Alien", 1050},
+	{1161, "Rear Bumper X-Flow", 950},
+	{1162, "Alien Spoiler", 650},
+	{1163, "X-Flow Spoiler", 450},
+	{1164, "Alien Spoiler", 550},
+	{1165, "Front X-Flow Bumper", 850},
+	{1166, "Front Alien Bumper", 950},
+	{1167, "Rear X-Flow Bumper", 850},
+	{1168, "Rear Alien Bumper", 950},
+	{1169, "Front Alien Bumper", 970},
+	{1170, "Front X-Flow Bumper", 880},
+	{1171, "Front Alien Bumper", 990},
+	{1172, "Front X-Flow Bumper", 900},
+	{1173, "Front X-Flow Bumper", 950},
+	{1174, "Front Bumper Chrome", 1000},
+	{1175, "Front Bumper Slamin", 900},
+	{1176, "Rear Bumper Chrome", 1000},
+	{1177, "Rear Bumper Slamin", 900},
+	{1178, "Rear Bumper Slamin", 2050},
+	{1179, "Front Bumper Chrome", 2150},
+	{1180, "Rear Bumper Chrome", 2130},
+	{1181, "Front Bumper Slamin", 2050},
+	{1182, "Front Bumper Chrome", 2130},
+	{1183, "Rear Bumper Slamin", 2040},
+	{1184, "Rear Bumper Chrome", 2150},
+	{1185, "Front Bumper Slamin", 2040},
+	{1186, "Rear Bumper Slamin", 2095},
+	{1187, "Rear Bumper Chrome", 2175},
+	{1188, "Front Bumper Slamin", 2080},
+	{1189, "Front Bumper Chrome", 2200},
+	{1190, "Front Bumper Slamin", 1200},
+	{1191, "Front Bumper Chrome", 1040},
+	{1192, "Rear Bumper Chrome", 940},
+	{1193, "Rear Bumper Slamin", 1100}
+};
+
 static const vSync_gVehFrontBullbars[5] = {
 	1100, 1115, 1116, 1123, 1125
 };
@@ -601,68 +807,37 @@ static Float:vSync_gPaynSprayPos[10][3] = {
 
 
 // ================================== [HOOKED FUNCTIONS] ================================== //
-stock vSync_CreateVehicle(modelid, Float:x, Float:y, Float:z, Float:rotation, color1, color2, respawn_delay, addsiren=0)
-{
-	// Check vehicle's model ID.
-	if(!(400 <= modelid <= 611))
-	{
+stock VS_vSync_CreateVehicle(modelid, Float:x, Float:y, Float:z, Float:rotation, color1, color2, respawn_delay, addsiren=0) {
+	if (!(400 <= modelid <= 611)) {
 		return INVALID_VEHICLE_ID;
-	}
-	
-	// Add siren to the Firetruck (ladder variant), by default it's disabled.
-	if(modelid == 544)
-	{
+	} if (modelid == 544) {
 		addsiren = 1;
-	}
-
-	// Generate random colors (if it proceeds)
-	if((color1 == -1 || color2 == -1) && vSync_gVehDefaultColors[modelid - 400][0] != 0)
-	{
-
+	} if ((color1 == -1 || color2 == -1) && vSync_gVehDefaultColors[modelid - 400][0] != 0) {
 		new rand_col = random(vSync_gVehDefaultColors[modelid - 400][0]) + 1;
-
-		if(!isodd(rand_col))
-		{
+		if (!isodd(rand_col)) {
 			rand_col--;
-		}
-
-		if(color1 == -1)
-		{
+		} if (color1 == -1) {
 			color1 = vSync_gVehDefaultColors[modelid - 400][rand_col];
-		}
-
-		if(color2 == -1)
-		{
+		} if (color2 == -1) {
 			color2 = vSync_gVehDefaultColors[modelid - 400][rand_col + 1];
 		}
 	}
-
 	new vehicleid = CreateVehicle(modelid, Float:x, Float:y, Float:z, Float:rotation, color1, color2, respawn_delay, addsiren);
-
-	// Check vehicle's ID (to avoid using INVALID_VEHICLE_ID as array index).
-	if(1 <= vehicleid <= MAX_VEHICLES)
-	{
+	if (IsValidVehicle(vehicleid)) {
 		SetVehicleHealth(vehicleid, 999.0);
-
 		vSync_gVehicleInternal[vehicleid - 1][vSync_Color1] = color1;
 		vSync_gVehicleInternal[vehicleid - 1][vSync_Color2] = color2;
-
 		vSync_gVehicleInternal[vehicleid - 1][vSync_OrgCol1] = color1;
 		vSync_gVehicleInternal[vehicleid - 1][vSync_OrgCol2] = color2;
-		
 		vSync_gVehicleInternal[vehicleid - 1][vSync_Paintjob] = INVALID_PAINTJOB_ID;
 		vSync_gVehicleInternal[vehicleid - 1][vSync_Interior] = 0;
-
 		vSync_gVehicleInternal[vehicleid - 1][vSync_Siren] = addsiren;
-
 		vSync_gVehicleInternal[vehicleid - 1][vSync_Stereo] = 0;
 		vSync_gVehicleInternal[vehicleid - 1][vSync_Bumpers][0] = 0;
 		vSync_gVehicleInternal[vehicleid - 1][vSync_Bumpers][1] = 0;
 		vSync_gVehicleInternal[vehicleid - 1][vSync_Bullbars][0] = 0;
 		vSync_gVehicleInternal[vehicleid - 1][vSync_Bullbars][1] = 0;
-
 		strcpy(vSync_gVehicleInternal[vehicleid - 1][vSync_NumberP], "XYZSR998", MAX_VEHICLE_NUMBERPLATE);
-
 		CallLocalFunction("OnVehicleCreated", "i", vehicleid);
 	}
 	return vehicleid;
@@ -674,61 +849,35 @@ stock vSync_CreateVehicle(modelid, Float:x, Float:y, Float:z, Float:rotation, co
 #endif
 #define CreateVehicle vSync_CreateVehicle
 
-stock vSync_AddStaticVehicle(modelid, Float:x, Float:y, Float:z, Float:rotation, color1, color2)
-{
-	// Check vehicle's model ID.
-	if(!(400 <= modelid <= 611))
-	{
+stock VS_vSync_AddStaticVehicle(modelid, Float:x, Float:y, Float:z, Float:rotation, color1, color2) {
+	if (!(400 <= modelid <= 611)) {
 		return INVALID_VEHICLE_ID;
-	}
-
-	// Generate random colors (if it proceeds)
-	if((color1 == -1 || color2 == -1) && vSync_gVehDefaultColors[modelid - 400][0] != 0)
-	{
+	} if ((color1 == -1 || color2 == -1) && vSync_gVehDefaultColors[modelid - 400][0] != 0) {
 		new rand_col = random(vSync_gVehDefaultColors[modelid - 400][0]) + 1;
-
-		if(!isodd(rand_col))
-		{
+		if (!isodd(rand_col)) {
 			rand_col--;
-		}
-
-		if(color1 == -1)
-		{
+		} if (color1 == -1) {
 			color1 = vSync_gVehDefaultColors[modelid - 400][rand_col];
-		}
-
-		if(color2 == -1)
-		{
+		} if (color2 == -1) {
 			color2 = vSync_gVehDefaultColors[modelid - 400][rand_col + 1];
 		}
 	}
-
 	new vehicleid = AddStaticVehicle(modelid, Float:x, Float:y, Float:z, Float:rotation, color1, color2);
-
-	// Check vehicle's ID (to avoid using INVALID_VEHICLE_ID as array index).
-	if(1 <= vehicleid <= MAX_VEHICLES)
-	{
+	if (IsValidVehicle(vehicleid)) {
 		SetVehicleHealth(vehicleid, 999.0);
-		
 		vSync_gVehicleInternal[vehicleid - 1][vSync_Color1] = color1;
 		vSync_gVehicleInternal[vehicleid - 1][vSync_Color2] = color2;
-
 		vSync_gVehicleInternal[vehicleid - 1][vSync_OrgCol1] = color1;
 		vSync_gVehicleInternal[vehicleid - 1][vSync_OrgCol2] = color2;
-		
 		vSync_gVehicleInternal[vehicleid - 1][vSync_Paintjob] = INVALID_PAINTJOB_ID;
 		vSync_gVehicleInternal[vehicleid - 1][vSync_Interior] = 0;
-
 		vSync_gVehicleInternal[vehicleid - 1][vSync_Siren] = 0;
-
 		vSync_gVehicleInternal[vehicleid - 1][vSync_Stereo] = 0;
 		vSync_gVehicleInternal[vehicleid - 1][vSync_Bumpers][0] = 0;
 		vSync_gVehicleInternal[vehicleid - 1][vSync_Bumpers][1] = 0;
 		vSync_gVehicleInternal[vehicleid - 1][vSync_Bullbars][0] = 0;
 		vSync_gVehicleInternal[vehicleid - 1][vSync_Bullbars][1] = 0;
-
 		strcpy(vSync_gVehicleInternal[vehicleid - 1][vSync_NumberP], "XYZSR998", MAX_VEHICLE_NUMBERPLATE);
-
 		CallLocalFunction("OnVehicleCreated", "i", vehicleid);
 	}
 	return vehicleid;
@@ -740,72 +889,39 @@ stock vSync_AddStaticVehicle(modelid, Float:x, Float:y, Float:z, Float:rotation,
 #endif
 #define AddStaticVehicle vSync_AddStaticVehicle
 
-stock vSync_AddStaticVehicleEx(modelid, Float:x, Float:y, Float:z, Float:rotation, color1, color2, respawn_delay, addsiren=0)
-{
-	// Check vehicle's model ID.
-	if(!(400 <= modelid <= 611))
-	{
+stock VS_vSync_AddStaticVehicleEx(modelid, Float:x, Float:y, Float:z, Float:rotation, color1, color2, respawn_delay, addsiren=0) {
+	if (!(400 <= modelid <= 611)) {
 		return INVALID_VEHICLE_ID;
-	}
-	
-	// Add siren to the Firetruck (ladder variant), by default it's disabled.
-	if(modelid == 544)
-	{
+	} if (modelid == 544) {
 		addsiren = 1;
-	}
-
-	// Generate random colors (if it proceeds)
-	if((color1 == -1 || color2 == -1) && vSync_gVehDefaultColors[modelid - 400][0] != 0)
-	{
+	} if ((color1 == -1 || color2 == -1) && vSync_gVehDefaultColors[modelid - 400][0] != 0) {
 		new rand_col = random(vSync_gVehDefaultColors[modelid - 400][0]) + 1;
-
-		if(!isodd(rand_col))
-		{
+		if (!isodd(rand_col)) {
 			rand_col--;
-		}
-
-		if(isodd(rand_col))
-		{
+		} if (isodd(rand_col)) {
 			rand_col--;
-		}
-
-		if(color1 == -1)
-		{
+		} if (color1 == -1) {
 			color1 = vSync_gVehDefaultColors[modelid - 400][rand_col];
-		}
-
-		if(color2 == -1)
-		{
+		} if (color2 == -1) {
 			color2 = vSync_gVehDefaultColors[modelid - 400][rand_col + 1];
 		}
 	}
-
 	new vehicleid = AddStaticVehicleEx(modelid, Float:x, Float:y, Float:z, Float:rotation, color1, color2, respawn_delay, addsiren);
-
-	// Check vehicle's ID (to avoid using INVALID_VEHICLE_ID as array index).
-	if(1 <= vehicleid <= MAX_VEHICLES)
-	{
+	if (IsValidVehicle(vehicleid)) {
 		SetVehicleHealth(vehicleid, 999.0);
-
 		vSync_gVehicleInternal[vehicleid - 1][vSync_Color1] = color1;
 		vSync_gVehicleInternal[vehicleid - 1][vSync_Color2] = color2;
-
 		vSync_gVehicleInternal[vehicleid - 1][vSync_OrgCol1] = color1;
 		vSync_gVehicleInternal[vehicleid - 1][vSync_OrgCol2] = color2;
-		
 		vSync_gVehicleInternal[vehicleid - 1][vSync_Paintjob] = INVALID_PAINTJOB_ID;
 		vSync_gVehicleInternal[vehicleid - 1][vSync_Interior] = 0;
-
 		vSync_gVehicleInternal[vehicleid - 1][vSync_Siren] = addsiren;
-
 		vSync_gVehicleInternal[vehicleid - 1][vSync_Stereo] = 0;
 		vSync_gVehicleInternal[vehicleid - 1][vSync_Bumpers][0] = 0;
 		vSync_gVehicleInternal[vehicleid - 1][vSync_Bumpers][1] = 0;
 		vSync_gVehicleInternal[vehicleid - 1][vSync_Bullbars][0] = 0;
 		vSync_gVehicleInternal[vehicleid - 1][vSync_Bullbars][1] = 0;
-
 		strcpy(vSync_gVehicleInternal[vehicleid - 1][vSync_NumberP], "XYZSR998", MAX_VEHICLE_NUMBERPLATE);
-
 		CallLocalFunction("OnVehicleCreated", "i", vehicleid);
 	}
 	return vehicleid;
@@ -817,14 +933,12 @@ stock vSync_AddStaticVehicleEx(modelid, Float:x, Float:y, Float:z, Float:rotatio
 #endif
 #define AddStaticVehicleEx vSync_AddStaticVehicleEx
 
-stock vSync_SetVehicleNumberPlate(vehicleid, numberplate[])
-{
-	if(1 <= vehicleid <= MAX_VEHICLES)
-	{
+stock VS_vSync_SetVehicleNumberPlate(vehicleid, const numberplate[]) {
+	if (IsValidVehicle(vehicleid)) {
 		strcpy(vSync_gVehicleInternal[vehicleid - 1][vSync_NumberP], numberplate, MAX_VEHICLE_NUMBERPLATE);
 		return SetVehicleNumberPlate(vehicleid, numberplate);
 	}
-	return 0;
+	return false;
 }
 #if defined _ALS_SetVehicleNumberPlate
 	#undef SetVehicleNumberPlate
@@ -833,14 +947,12 @@ stock vSync_SetVehicleNumberPlate(vehicleid, numberplate[])
 #endif
 #define SetVehicleNumberPlate vSync_SetVehicleNumberPlate
 
-stock vSync_LinkVehicleToInterior(vehicleid, interior)
-{
-	if(1 <= vehicleid <= MAX_VEHICLES)
-	{
+stock VS_vSync_LinkVehicleToInterior(vehicleid, interior) {
+	if (IsValidVehicle(vehicleid)) {
 		vSync_gVehicleInternal[vehicleid - 1][vSync_Interior] = interior;
 		return LinkVehicleToInterior(vehicleid, interior);
 	}
-	return 0;
+	return false;
 }
 #if defined _ALS_LinkVehicleToInterior
 	#undef LinkVehicleToInterior
@@ -849,32 +961,18 @@ stock vSync_LinkVehicleToInterior(vehicleid, interior)
 #endif
 #define LinkVehicleToInterior vSync_LinkVehicleToInterior
 
-stock vSync_ChangeVehicleColor(vehicleid, color1, color2)
-{
+stock VS_vSync_ChangeVehicleColor(vehicleid, color1, color2) {
 	new modelid = GetVehicleModel(vehicleid);
 
-	if(!(400 <= modelid <= 611))
-	{
-		return 0;
-	}
-
-	// Generate random colors (if it proceeds)
-	if((color1 == -1 || color2 == -1) && vSync_gVehDefaultColors[modelid - 400][0] != 0)
-	{
+	if (!(400 <= modelid <= 611)) {
+		return false;
+	} if ((color1 == -1 || color2 == -1) && vSync_gVehDefaultColors[modelid - 400][0] != 0) {
 		new rand_col = random(vSync_gVehDefaultColors[modelid - 400][0]) + 1;
-
-		if(!isodd(rand_col))
-		{
+		if (!isodd(rand_col)) {
 			rand_col--;
-		}
-
-		if(color1 == -1)
-		{
+		} if (color1 == -1) {
 			color1 = vSync_gVehDefaultColors[modelid - 400][rand_col];
-		}
-
-		if(color2 == -1)
-		{
+		} if (color2 == -1) {
 			color2 = vSync_gVehDefaultColors[modelid - 400][rand_col + 1];
 		}
 	}
@@ -882,7 +980,7 @@ stock vSync_ChangeVehicleColor(vehicleid, color1, color2)
 	vSync_gVehicleInternal[vehicleid - 1][vSync_Color1] = color1;
 	vSync_gVehicleInternal[vehicleid - 1][vSync_Color2] = color2;
 
-	return ChangeVehicleColor(vehicleid, vSync_gVehicleInternal[vehicleid - 1][vSync_Color1], vSync_gVehicleInternal[vehicleid - 1][vSync_Color2]);
+	return ChangeVehicleColours(vehicleid, vSync_gVehicleInternal[vehicleid - 1][vSync_Color1], vSync_gVehicleInternal[vehicleid - 1][vSync_Color2]);
 }
 #if defined _ALS_ChangeVehicleColor
 	#undef ChangeVehicleColor
@@ -891,16 +989,14 @@ stock vSync_ChangeVehicleColor(vehicleid, color1, color2)
 #endif
 #define ChangeVehicleColor vSync_ChangeVehicleColor
 
-stock vSync_ChangeVehiclePaintjob(vehicleid, paintjobid)
-{
-	if(1 <= vehicleid <= MAX_VEHICLES)
-	{
+stock VS_vSync_ChangeVehiclePaintjob(vehicleid, paintjobid) {
+	if (IsValidVehicle(vehicleid)) {
 		vSync_gVehicleInternal[vehicleid - 1][vSync_Paintjob] = paintjobid;
 		ChangeVehiclePaintjob(vehicleid, vSync_gVehicleInternal[vehicleid - 1][vSync_Paintjob]);
 		ChangeVehicleColor(vehicleid, vSync_gVehicleInternal[vehicleid - 1][vSync_Color1], vSync_gVehicleInternal[vehicleid - 1][vSync_Color2]);
-		return 1;
+		return true;
 	}
-	return 1;
+	return true;
 }
 #if defined _ALS_ChangeVehiclePaintjob
 	#undef ChangeVehiclePaintjob
@@ -909,14 +1005,11 @@ stock vSync_ChangeVehiclePaintjob(vehicleid, paintjobid)
 #endif
 #define ChangeVehiclePaintjob vSync_ChangeVehiclePaintjob
 
-stock vSync_GetVehicleComponentType(componentid)
-{
-	if(IsComponentFrontBullbar(componentid))
-	{
+stock VS_vSync_GetVehicleComponentType(componentid) {
+	if (IsComponentFrontBullbar(componentid)) {
 		return CARMODTYPE_FRONT_BULLBAR;
 	}
-	else if(IsComponentRearBullbar(componentid))
-	{
+	else if (IsComponentRearBullbar(componentid)) {
 		return CARMODTYPE_REAR_BULLBAR;
 	}
 	return GetVehicleComponentType(componentid);
@@ -928,36 +1021,24 @@ stock vSync_GetVehicleComponentType(componentid)
 #endif
 #define GetVehicleComponentType vSync_GetVehicleComponentType
 
-stock vSync_GetVehicleComponentInSlot(vehicleid, slot)
-{
-	if(1 <= vehicleid <= MAX_VEHICLES)
-	{
-		switch(slot)
-		{
-			case CARMODTYPE_STEREO:
-			{
+stock VS_vSync_GetVehicleComponentInSlot(vehicleid, slot) {
+	if (IsValidVehicle(vehicleid)) {
+		switch(slot) {
+			case CARMODTYPE_STEREO: {
 				return vSync_gVehicleInternal[vehicleid - 1][vSync_Stereo];
-			}
-			case CARMODTYPE_FRONT_BUMPER:
-			{
+			} case CARMODTYPE_FRONT_BUMPER: {
 				return vSync_gVehicleInternal[vehicleid - 1][vSync_Bumpers][0];
-			}
-			case CARMODTYPE_REAR_BUMPER:
-			{
+			} case CARMODTYPE_REAR_BUMPER: {
 				return vSync_gVehicleInternal[vehicleid - 1][vSync_Bumpers][1];
-			}
-			case CARMODTYPE_FRONT_BULLBAR:
-			{
+			} case CARMODTYPE_FRONT_BULLBAR: {
 				return vSync_gVehicleInternal[vehicleid - 1][vSync_Bullbars][0];
-			}
-			case CARMODTYPE_REAR_BULLBAR:
-			{
+			} case CARMODTYPE_REAR_BULLBAR: {
 				return vSync_gVehicleInternal[vehicleid - 1][vSync_Bullbars][1];
 			}
 		}
-		return GetVehicleComponentInSlot(vehicleid, slot);
+		return GetVehicleComponentInSlot(vehicleid, CARMODTYPE:slot);
 	}
-	return 0;
+	return false;
 }
 #if defined _ALS_GetVehicleComponentInSlot
 	#undef GetVehicleComponentInSlot
@@ -966,35 +1047,22 @@ stock vSync_GetVehicleComponentInSlot(vehicleid, slot)
 #endif
 #define GetVehicleComponentInSlot vSync_GetVehicleComponentInSlot
 
-stock vSync_AddVehicleComponent(vehicleid, componentid)
-{
+stock VS_vSync_AddVehicleComponent(vehicleid, componentid) {
 	new modelid = GetVehicleModel(vehicleid);
 
-	if(!modelid || !VehicleSupportsComponent(modelid, componentid))
-	{
-		return 0;
+	if (!modelid || !VehicleSupportsComponent(modelid, CARMODTYPE:componentid)) {
+		return false;
 	}
-
-	switch(GetVehicleComponentType(componentid))
-	{
-		case CARMODTYPE_STEREO:
-		{
+	switch(GetVehicleComponentType(componentid)) {
+		case CARMODTYPE_STEREO: {
 			vSync_gVehicleInternal[vehicleid - 1][vSync_Stereo] = componentid;
-		}
-		case CARMODTYPE_FRONT_BUMPER:
-		{
+		} case CARMODTYPE_FRONT_BUMPER: {
 			vSync_gVehicleInternal[vehicleid - 1][vSync_Bumpers][0] = componentid;
-		}
-		case CARMODTYPE_REAR_BUMPER:
-		{
+		} case CARMODTYPE_REAR_BUMPER: {
 			vSync_gVehicleInternal[vehicleid - 1][vSync_Bumpers][1] = componentid;
-		}
-		case CARMODTYPE_FRONT_BULLBAR:
-		{
+		} case CARMODTYPE_FRONT_BULLBAR: {
 			vSync_gVehicleInternal[vehicleid - 1][vSync_Bullbars][0] = componentid;
-		}
-		case CARMODTYPE_REAR_BULLBAR:
-		{
+		} case CARMODTYPE_REAR_BULLBAR: {
 			vSync_gVehicleInternal[vehicleid - 1][vSync_Bullbars][1] = componentid;
 		}
 	}
@@ -1007,36 +1075,24 @@ stock vSync_AddVehicleComponent(vehicleid, componentid)
 #endif
 #define AddVehicleComponent vSync_AddVehicleComponent
 
-stock vSync_RemoveVehicleComponent(vehicleid, componentid)
-{
-	if(1 <= vehicleid <= MAX_VEHICLES)
-	{
-		switch(GetVehicleComponentType(componentid))
-		{
-			case CARMODTYPE_STEREO:
-			{
+stock VS_vSync_RemoveVehicleComponent(vehicleid, componentid) {
+	if (IsValidVehicle(vehicleid)) {
+		switch(GetVehicleComponentType(componentid)) {
+			case CARMODTYPE_STEREO: {
 				vSync_gVehicleInternal[vehicleid - 1][vSync_Stereo] = 0;
-			}
-			case CARMODTYPE_FRONT_BUMPER:
-			{
+			} case CARMODTYPE_FRONT_BUMPER: {
 				vSync_gVehicleInternal[vehicleid - 1][vSync_Bumpers][0] = 0;
-			}
-			case CARMODTYPE_REAR_BUMPER:
-			{
+			} case CARMODTYPE_REAR_BUMPER: {
 				vSync_gVehicleInternal[vehicleid - 1][vSync_Bumpers][1] = 0;
-			}
-			case CARMODTYPE_FRONT_BULLBAR:
-			{
+			} case CARMODTYPE_FRONT_BULLBAR: {
 				vSync_gVehicleInternal[vehicleid - 1][vSync_Bullbars][0] = 0;
-			}
-			case CARMODTYPE_REAR_BULLBAR:
-			{
+			} case CARMODTYPE_REAR_BULLBAR: {
 				vSync_gVehicleInternal[vehicleid - 1][vSync_Bullbars][1] = 0;
 			}
 		}
 		return RemoveVehicleComponent(vehicleid, componentid);
 	}
-	return 0;
+	return false;
 }
 #if defined _ALS_RemoveVehicleComponent
 	#undef RemoveVehicleComponent
@@ -1045,23 +1101,17 @@ stock vSync_RemoveVehicleComponent(vehicleid, componentid)
 #endif
 #define RemoveVehicleComponent vSync_RemoveVehicleComponent
 
-stock vSync_DestroyVehicle(vehicleid)
-{
-	if(1 <= vehicleid <= MAX_VEHICLES)
-	{
+stock VS_vSync_DestroyVehicle(vehicleid) {
+	if (IsValidVehicle(vehicleid)) {
 		SetVehicleNeonLights(vehicleid, false);
-
 		vSync_gVehicleInternal[vehicleid - 1][vSync_Stereo] = 0;
-
 		vSync_gVehicleInternal[vehicleid - 1][vSync_Bumpers][0] = 0;
 		vSync_gVehicleInternal[vehicleid - 1][vSync_Bumpers][1] = 0;
-
 		vSync_gVehicleInternal[vehicleid - 1][vSync_Bullbars][0] = 0;
 		vSync_gVehicleInternal[vehicleid - 1][vSync_Bullbars][1] = 0;
-
 		return DestroyVehicle(vehicleid);
 	}
-	return 0;
+	return false;
 }
 #if defined _ALS_DestroyVehicle
 	#undef DestroyVehicle
@@ -1072,30 +1122,21 @@ stock vSync_DestroyVehicle(vehicleid)
 
 
 // ================================== [HOOKED CALLBACKS] ================================== //
-hook OnPlayerConnect(playerid)
-{
+hook OnPlayerConnect(playerid) {
 	vSync_pInsideModShop[playerid] = false;
 	vSync_pBuyingPaintjob[playerid] = false;
 	return Y_HOOKS_CONTINUE_RETURN_1;
 }
 
-hook OnPlayerUpdate(playerid)
-{
-	if(GetPlayerState(playerid) == PLAYER_STATE_DRIVER)
-    {
+hook OnPlayerUpdate(playerid) {
+	if (GetPlayerState(playerid) == PLAYER_STATE_DRIVER) {
         new Float:v_health;
         new vehicleid = GetPlayerVehicleID(playerid);
-
         GetVehicleHealth(vehicleid, v_health);
-
-        if(v_health >= 1000.0 && (gettime() - vSync_PaySprayTick[playerid]) >= 1)
-        {
+        if (v_health >= 1000.0 && (gettime() - vSync_PaySprayTick[playerid]) >= 1) {
             SetVehicleHealth(vehicleid, 999.0);
-
             vSync_PaySprayTick[playerid] = gettime();
-
-           	if(IsPlayerInsidePaySpray(playerid))
-           	{
+           	if (IsPlayerInsidePaySpray(playerid)) {
            		ChangeVehicleColor(vehicleid, -1, -1);
        			CallLocalFunction("OnVehicleRespray", "dddd", playerid, vehicleid, vSync_gVehicleInternal[vehicleid - 1][vSync_Color1], vSync_gVehicleInternal[vehicleid - 1][vSync_Color2]);
        		}
@@ -1104,84 +1145,56 @@ hook OnPlayerUpdate(playerid)
     return Y_HOOKS_CONTINUE_RETURN_1;
 }
 
-hook OnPlayerKeyStateChange(playerid, newkeys, oldkeys)
-{
-	if(RELEASED(KEY_SPRINT))
-	{
-		if(GetPlayerState(playerid) == PLAYER_STATE_DRIVER && vSync_pBuyingPaintjob[playerid] && GetTickDiff(GetTickCount(), vSync_pTick[playerid]) > 50 && GetPlayerMoney(playerid) >= 500)
-		{
+hook OnPlayerKeyStateChange(playerid, KEY:newkeys, KEY:oldkeys) {
+	if (RELEASED(KEY_SPRINT)) {
+		if (GetPlayerState(playerid) == PLAYER_STATE_DRIVER && vSync_pBuyingPaintjob[playerid] && GetTickDiff(GetTickCount(), vSync_pTick[playerid]) > 50 && GetPlayerMoney(playerid) >= 500) {
 			new vehicleid = GetPlayerVehicleID(playerid);
-
 			vSync_pBuyingPaintjob[playerid] = false;
-
 			vSync_gVehicleInternal[vehicleid - 1][vSync_Paintjob] = vSync_pPaintjobID[playerid];
-
 			CallLocalFunction("OnVehicleChangePaintjob", "ddd", playerid, vehicleid, vSync_pPaintjobID[playerid]);
 		}
-	}
-	else if(RELEASED(KEY_SECONDARY_ATTACK))
-	{
-		if(GetPlayerState(playerid) == PLAYER_STATE_DRIVER && vSync_pBuyingPaintjob[playerid])
-		{
+	} else if (RELEASED(KEY_SECONDARY_ATTACK)) {
+		if (GetPlayerState(playerid) == PLAYER_STATE_DRIVER && vSync_pBuyingPaintjob[playerid]) {
 			vSync_pBuyingPaintjob[playerid] = false;
 		}
 	}
 	return Y_HOOKS_CONTINUE_RETURN_1;
 }
 
-hook OnEnterExitModShop(playerid, enterexit, interiorid)
-{
+hook OnEnterExitModShop(playerid, enterexit, interiorid) {
 	new vehicleid = GetPlayerVehicleID(playerid);
 	new max_passengers = GetVehicleSeats(GetVehicleModel(vehicleid));
 	new count_passengers;
-
-	if(enterexit)
-	{
-		vSync_pInsideModShop[playerid] = true;
-
+	if (enterexit) {
+		vSync_pInsideModShop[playerid] = true; 
 		SetVehicleVirtualWorld(vehicleid, playerid);
-
-		foreach(new x : Player)
-		{
-			if(GetPlayerVehicleID(x) == vehicleid)
-			{
+		foreach(new x : Player) {
+			if (GetPlayerVehicleID(x) == vehicleid) {
 				count_passengers++;
 				SetPlayerVirtualWorld(x, playerid);
-
-				if(count_passengers >= max_passengers)
-				{
+				if (count_passengers >= max_passengers) {
 					break;
 				}
 			}
 		}
-	}
-	else
-	{
+	} else {
 		vSync_pInsideModShop[playerid] = false;
-
 		SetVehicleVirtualWorld(vehicleid, 0);
-
-		foreach(new x : Player)
-		{
-			if(GetPlayerVehicleID(x) == vehicleid)
-			{
+		foreach(new x : Player) {
+			if (GetPlayerVehicleID(x) == vehicleid) {
 				count_passengers++;
 				SetPlayerVirtualWorld(x, 0);
-
-				if(count_passengers >= max_passengers)
-				{
+				if (count_passengers >= max_passengers) {
 					break;
 				}
 			}
 		}
 	}
-	return 1;
+	return true;
 }
 
-hook OnVehiclePaintjob(playerid, vehicleid, paintjobid)
-{
-	if(paintjobid <= 2 && paintjobid != vSync_gVehicleInternal[vehicleid - 1][vSync_Paintjob])
-	{
+hook OnVehiclePaintjob(playerid, vehicleid, paintjobid) {
+	if (paintjobid <= 2 && paintjobid != vSync_gVehicleInternal[vehicleid - 1][vSync_Paintjob]) {
 		vSync_pTick[playerid] = GetTickCount();
 		vSync_pPaintjobID[playerid] = paintjobid;
 		vSync_pBuyingPaintjob[playerid] = true;
@@ -1189,62 +1202,40 @@ hook OnVehiclePaintjob(playerid, vehicleid, paintjobid)
 	return Y_HOOKS_CONTINUE_RETURN_1;
 }
 
-hook OnVehicleRespray(playerid, vehicleid, color1, color2)
-{
-	if(vSync_pInsideModShop[playerid] || (color1 == vSync_gVehicleInternal[vehicleid - 1][vSync_Color1] && color2 == vSync_gVehicleInternal[vehicleid - 1][vSync_Color2] && !IsPlayerInsidePaySpray(playerid)))
-	{
+hook OnVehicleRespray(playerid, vehicleid, color1, color2) {
+	if (vSync_pInsideModShop[playerid] || (color1 == vSync_gVehicleInternal[vehicleid - 1][vSync_Color1] && color2 == vSync_gVehicleInternal[vehicleid - 1][vSync_Color2] && !IsPlayerInsidePaySpray(playerid))) {
 		return Y_HOOKS_BREAK_RETURN_0;
 	}
-
 	vSync_gVehicleInternal[vehicleid - 1][vSync_Color1] = color1;
 	vSync_gVehicleInternal[vehicleid - 1][vSync_Color2] = color2;
-	
 	return Y_HOOKS_CONTINUE_RETURN_1;
 }
 
-hook OnVehicleSpawn(vehicleid)
-{
+hook OnVehicleSpawn(vehicleid) {
 	vSync_gVehicleInternal[vehicleid - 1][vSync_Paintjob] = 3;
-
 	vSync_gVehicleInternal[vehicleid - 1][vSync_Stereo] = 0;
 	vSync_gVehicleInternal[vehicleid - 1][vSync_Bumpers][0] = 0;
 	vSync_gVehicleInternal[vehicleid - 1][vSync_Bumpers][1] = 0;
 	vSync_gVehicleInternal[vehicleid - 1][vSync_Bullbars][0] = 0;
 	vSync_gVehicleInternal[vehicleid - 1][vSync_Bullbars][1] = 0;
-
 	ChangeVehicleColor(vehicleid, vSync_gVehicleInternal[vehicleid - 1][vSync_OrgCol1], vSync_gVehicleInternal[vehicleid - 1][vSync_OrgCol2]);
 	return Y_HOOKS_CONTINUE_RETURN_1;
 }
 
-hook OnVehicleMod(playerid, vehicleid, componentid)
-{
+hook OnVehicleMod(playerid, vehicleid, componentid) {
 	new modelid = GetVehicleModel(vehicleid);
-
-	if(!VehicleSupportsComponent(modelid, componentid))
-	{
+	if (!VehicleSupportsComponent(modelid, CARMODTYPE:componentid)) {
 		return Y_HOOKS_BREAK_RETURN_0;
-	}
-
-	switch(GetVehicleComponentType(componentid))
-	{
-		case CARMODTYPE_STEREO:
-		{
+	} switch(GetVehicleComponentType(componentid)) {
+		case CARMODTYPE_STEREO: {
 			vSync_gVehicleInternal[vehicleid - 1][vSync_Stereo] = componentid;
-		}
-		case CARMODTYPE_FRONT_BUMPER:
-		{
+		} case CARMODTYPE_FRONT_BUMPER: {
 			vSync_gVehicleInternal[vehicleid - 1][vSync_Bumpers][0] = componentid;
-		}
-		case CARMODTYPE_REAR_BUMPER:
-		{
+		} case CARMODTYPE_REAR_BUMPER: {
 			vSync_gVehicleInternal[vehicleid - 1][vSync_Bumpers][1] = componentid;
-		}
-		case CARMODTYPE_FRONT_BULLBAR:
-		{
+		} case CARMODTYPE_FRONT_BULLBAR: {
 			vSync_gVehicleInternal[vehicleid - 1][vSync_Bullbars][0] = componentid;
-		}
-		case CARMODTYPE_REAR_BULLBAR:
-		{
+		} case CARMODTYPE_REAR_BULLBAR: {
 			vSync_gVehicleInternal[vehicleid - 1][vSync_Bullbars][1] = componentid;
 		}
 	}
@@ -1253,316 +1244,250 @@ hook OnVehicleMod(playerid, vehicleid, componentid)
 
 
 // ================================== [NEW FUNCTIONS] ================================== //
-stock GetVehicleName(vehicleid, name[], len = sizeof(name))
-{
+stock VS_GetVehicleName(vehicleid, name[], len = sizeof(name)) {
 	new modelid = GetVehicleModel(vehicleid);
-
-	if(400 <= modelid <= 611)
-	{
+	if (400 <= modelid <= 611) {
 		strcpy(name, vSync_VehicleInfo[modelid - 400][Name], len);
 	}
 	return strlen(name);
 }
 
-stock GetVehicleColor(vehicleid, &color1, &color2)
-{
-	if(1 <= vehicleid <= MAX_VEHICLES)
-	{
-		color1 = vSync_gVehicleInternal[vehicleid - 1][vSync_Color1];
-		color2 = vSync_gVehicleInternal[vehicleid - 1][vSync_Color2];
-		return 1;
+stock VS_ReturnVehicleModelName(model) {
+	new name[32] = "Unknown";
+	if (400 <= model <= 611) {
+		strcpy(name, vSync_VehicleInfo[model - 400][Name], sizeof(name));
 	}
-	return 0;
+	return name;
 }
 
-stock GetVehiclePaintjob(vehicleid)
-{
-	if(1 <= vehicleid <= MAX_VEHICLES)
-	{
+stock VS_VS_GetVehicleColor(vehicleid, &color1, &color2) {
+	if (IsValidVehicle(vehicleid)) {
+		color1 = vSync_gVehicleInternal[vehicleid - 1][vSync_Color1];
+		color2 = vSync_gVehicleInternal[vehicleid - 1][vSync_Color2];
+		return true;
+	}
+	return false;
+}
+
+stock VS_VS_GetVehiclePaintjob(vehicleid) {
+	if (IsValidVehicle(vehicleid)) {
 		return vSync_gVehicleInternal[vehicleid - 1][vSync_Paintjob];
 	}
 	return -1;
 }
 
-stock GetVehicleNumberPlate(vehicleid, dest[], len = sizeof(dest))
-{
-	if(1 <= vehicleid <= MAX_VEHICLES)
-	{
+stock VS_VS_GetVehicleNumberPlate(vehicleid, dest[], len = sizeof(dest)) {
+	if (IsValidVehicle(vehicleid)) {
 		strcpy(dest, vSync_gVehicleInternal[vehicleid - 1][vSync_NumberP], len);
 	}
 	return strlen(dest);
 }
 
-stock GetVehicleInterior(vehicleid)
-{
-	if(1 <= vehicleid <= MAX_VEHICLES)
-	{
+stock VS_VS_GetVehicleInterior(vehicleid) {
+	if (IsValidVehicle(vehicleid)) {
 		return vSync_gVehicleInternal[vehicleid - 1][vSync_Interior];
 	}
-	return 0;
+	return false;
 }
 
-stock GetVehicleSiren(vehicleid)
-{
-	if(1 <= vehicleid <= MAX_VEHICLES)
-	{
+stock VS_GetVehicleSiren(vehicleid) {
+	if (IsValidVehicle(vehicleid)) {
 		return vSync_gVehicleInternal[vehicleid - 1][vSync_Siren];
 	}
-	return 0;
+	return false;
 }
 
-stock GetVehicleSeats(modelid)
-{
-	if(400 <= modelid <= 611)
-	{
+stock VS_GetVehicleSeats(modelid) {
+	if (400 <= modelid <= 611) {
 		return vSync_VehicleInfo[modelid - 400][Seats];
 	}
 	return -1;
 }
 
-stock GetVehicleWindows(modelid)
-{
-	if(400 <= modelid <= 611)
-	{
+stock VS_GetVehicleWindows(modelid) {
+	if (400 <= modelid <= 611) {
 		return vSync_VehicleInfo[modelid - 400][Windows];
 	}
-	return 0;
+	return false;
 }
 
-stock GetVehicleMaxSpeed(modelid)
-{
-	if(400 <= modelid <= 611)
-	{
+stock VS_GetVehicleMaxSpeed(modelid) {
+	if (400 <= modelid <= 611) {
 		return vSync_VehicleInfo[modelid - 400][MaxSpeed];
 	}
-	return 0;
+	return false;
 }
 
-stock Float:GetVehicleMass(modelid)
-{
-	if(400 <= modelid <= 611)
-	{
+stock VS_Float:GetVehicleMass(modelid) {
+	if (400 <= modelid <= 611) {
 		return vSync_VehicleInfo[modelid - 400][Mass];
 	}
 	return 0.0;
 }
 
-stock GetVehicleSpeed(vehicleid)
-{
+stock VS_GetVehicleSpeed(vehicleid) {
 	new Float:v_x;
 	new Float:v_y;
 	new Float:v_z;
-
 	GetVehicleVelocity(vehicleid, v_x, v_y, v_z);
-
 	return floatround(floatsqroot((v_x * v_x) + (v_y * v_y) + (v_z * v_z)) * 181.5);
 }
 
-stock GetVehicleEngineType(modelid)
-{
-	if(400 <= modelid <= 611)
-	{
-		if(modelid == 481 || modelid == 509 || modelid == 510) // Bikes
-		{
+stock VS_GetVehicleEngineType(modelid) {
+	if (400 <= modelid <= 611) {
+		if (modelid == 481 || modelid == 509 || modelid == 510) {
 			return 'H'; // Human-powered vehicle
-		}
-		else
-		{
+		} else {
 			return vSync_VehicleInfo[modelid - 400][EngineType];
 		}
 	}
 	return 0;
 }
 
-stock GetVehicleDriveType(modelid)
-{
-	if(400 <= modelid <= 611)
-	{
-		if(modelid == 481 || modelid == 509 || modelid == 510) // Bikes
-		{
+stock VS_GetVehicleDriveType(modelid) {
+	if (400 <= modelid <= 611) {
+		if (modelid == 481 || modelid == 509 || modelid == 510) {
 			return 'H'; // Human-powered vehicle
-		}
-		else
-		{
+		} else {
 			return vSync_VehicleInfo[modelid - 400][DriveType];
 		}
 	}
 	return 0;
 }
 
-stock VehicleSupportsNeonLights(modelid)
-{
+stock VS_VehicleSupportsNeonLights(modelid) {
     new idx = modelid - 400;
-
-	if(0 <= idx <= 211)
-	{
-        if(vSync_VehicleInfo[idx][NeonOffsetX] == 0.0 && vSync_VehicleInfo[idx][NeonOffsetY] == 0.0 && vSync_VehicleInfo[idx][NeonOffsetZ] == 0.0)
-		{
-	    	return 0;
+	if (0 <= idx <= 211){
+        if (vSync_VehicleInfo[idx][NeonOffsetX] == 0.0 && vSync_VehicleInfo[idx][NeonOffsetY] == 0.0 && vSync_VehicleInfo[idx][NeonOffsetZ] == 0.0) {
+	    	return false;
 		}
-		return 1;
+		return true;
 	}
-	return 0;
+	return false;
 }
 
-stock SetVehicleNeonLights(vehicleid, bool:enable = true, color = NEON_LIGHT_RED)
-{
+stock VS_SetVehicleNeonLights(vehicleid, bool:enable = true, color = NEON_LIGHT_RED) {
 	new idx = GetVehicleModel(vehicleid) - 400;
-
-	if(0 <= idx <= 211)
-	{
-		for(new x = 0; x < 2; x++)
-		{
+	if (0 <= idx <= 211) {
+		for(new x = 0; x < 2; x++) {
 			#if defined _streamer_included
-				if(IsValidDynamicObject(vSync_gVehicleInternal[vehicleid - 1][vSync_Neon][x]))
-				{
+				if (IsValidDynamicObject(vSync_gVehicleInternal[vehicleid - 1][vSync_Neon][x])) {
 				    DestroyDynamicObject(vSync_gVehicleInternal[vehicleid - 1][vSync_Neon][x]);
 				}
 			#else
-				if(IsValidObject(vSync_gVehicleInternal[vehicleid - 1][vSync_Neon][x]))
-				{
+				if (IsValidObject(vSync_gVehicleInternal[vehicleid - 1][vSync_Neon][x])) {
 					DestroyObject(vSync_gVehicleInternal[vehicleid - 1][vSync_Neon][x]);
 				}
 			#endif
-		}
-
-		if((NEON_LIGHT_RED <= color <= NEON_LIGHT_WHITE) && enable)
-		{
+		} if ((NEON_LIGHT_RED <= color <= NEON_LIGHT_WHITE) && enable) {
 			#if defined _streamer_included
 				vSync_gVehicleInternal[vehicleid - 1][vSync_Neon][0] = CreateDynamicObject(color, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 				vSync_gVehicleInternal[vehicleid - 1][vSync_Neon][1] = CreateDynamicObject(color, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-
 				AttachDynamicObjectToVehicle(vSync_gVehicleInternal[vehicleid - 1][vSync_Neon][0], vehicleid, vSync_VehicleInfo[idx][NeonOffsetX], vSync_VehicleInfo[idx][NeonOffsetY], vSync_VehicleInfo[idx][NeonOffsetZ], 0.0, 0.0, 0.0);
 				AttachDynamicObjectToVehicle(vSync_gVehicleInternal[vehicleid - 1][vSync_Neon][1], vehicleid, -vSync_VehicleInfo[idx][NeonOffsetX], vSync_VehicleInfo[idx][NeonOffsetY], vSync_VehicleInfo[idx][NeonOffsetZ], 0.0, 0.0, 0.0);
 			#else
 				vSync_gVehicleInternal[vehicleid - 1][vSync_Neon][0] = CreateObject(color, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
 				vSync_gVehicleInternal[vehicleid - 1][vSync_Neon][1] = CreateObject(color, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-
 				AttachObjectToVehicle(vSync_gVehicleInternal[vehicleid - 1][vSync_Neon][0], vehicleid, vSync_VehicleInfo[idx][NeonOffsetX], vSync_VehicleInfo[idx][NeonOffsetY], vSync_VehicleInfo[idx][NeonOffsetZ], 0.0, 0.0, 0.0);
 				AttachObjectToVehicle(vSync_gVehicleInternal[vehicleid - 1][vSync_Neon][1], vehicleid, -vSync_VehicleInfo[idx][NeonOffsetX], vSync_VehicleInfo[idx][NeonOffsetY], vSync_VehicleInfo[idx][NeonOffsetZ], 0.0, 0.0, 0.0);
 			#endif
 		}
-		return 1;
+		return true;
 	}
-	return 0;
+	return false;
 }
 
-stock GetVehicleNeonLightsState(vehicleid)
-{
-	if(1 <= vehicleid <= MAX_VEHICLES)
- 	{
+stock VS_GetVehicleNeonLightsState(vehicleid) {
+	if (IsValidVehicle(vehicleid)) {
 		#if defined _streamer_included
-			if(IsValidDynamicObject(vSync_gVehicleInternal[vehicleid - 1][vSync_Neon][0]) && IsValidDynamicObject(vSync_gVehicleInternal[vehicleid - 1][vSync_Neon][1]))
-			{
-				return 1;
+			if (IsValidDynamicObject(vSync_gVehicleInternal[vehicleid - 1][vSync_Neon][0]) && IsValidDynamicObject(vSync_gVehicleInternal[vehicleid - 1][vSync_Neon][1])) {
+				return true;
 			}
 		#else
-			if(IsValidObject(vSync_gVehicleInternal[vehicleid - 1][vSync_Neon][0]) && IsValidObject(vSync_gVehicleInternal[vehicleid - 1][vSync_Neon][1]))
-			{
-				return 1;
+			if (IsValidObject(vSync_gVehicleInternal[vehicleid - 1][vSync_Neon][0]) && IsValidObject(vSync_gVehicleInternal[vehicleid - 1][vSync_Neon][1])) {
+				return true;
 			}
 		#endif
 	}
-	return 0;
+	return false;
 }
 
-stock VehicleSupportsNitro(modelid)
-{
-	if(400 <= modelid <= 611)
-	{
+stock VS_VehicleSupportsNitro(modelid) {
+	if (400 <= modelid <= 611) {
 		return vSync_VehicleInfo[modelid - 400][Nitro];
 	}
-	return 0;
+	return false;
 }
 
-stock VehicleSupportsComponent(modelid, componentid)
-{
-	if(!(400 <= modelid <= 611))
-	{
-		return 0;
-	}
-
-	// Check if the component is a wheel, stereo, hydraulics or nitro.
-	if(GetVehicleComponentType(componentid) == CARMODTYPE_WHEELS || componentid == 1086 || componentid == 1087 || (1008 <= componentid <= 1010))
-	{
+stock VS_VehicleSupportsComponent(modelid, componentid) {
+	if (!(400 <= modelid <= 611)) {
+		return false;
+	} if (CARMODTYPE:GetVehicleComponentType(componentid) == CARMODTYPE_WHEELS || componentid == 1086 || componentid == 1087 || (1008 <= componentid <= 1010)) {
 		// If the vehicle doesn't support nitro it must be a bike, boat or plane.
-		if(!VehicleSupportsNitro(modelid))
-		{
-			return 0;
+		if (!VehicleSupportsNitro(modelid)) {
+			return false;
 		}
-		return 1;
-	}
-	else
-	{
-		for(new x = 0; x < sizeof(vSync_LegalMods); x++)
-		{
-			if(vSync_LegalMods[x][0] != modelid)
-			{
+		return true;
+	} else {
+		for(new x = 0; x < sizeof(vSync_LegalMods); x++) {
+			if (vSync_LegalMods[x][0] != modelid) {
 				continue;
-			}
-
-			for(new y = 1; y < sizeof(vSync_LegalMods[]); y++)
-			{
-				if(vSync_LegalMods[x][y] == componentid)
-				{
-					return 1;
+			} for(new y = 1; y < sizeof(vSync_LegalMods[]); y++) {
+				if (vSync_LegalMods[x][y] == componentid) {
+					return true;
 				}
 			}
 		}
 	}
-	return 0;
+	return false;
 }
 
-stock SetVehicleParams(vehicleid, vSync_VehicleParams:type, bool:status)
-{
-	new params[7];
+stock VS_SetVehicleParams(vehicleid, vSync_VehicleParams:type, bool:status) {
+	new bool:params[7];
 	GetVehicleParamsEx(vehicleid, params[0], params[1], params[2], params[3], params[4], params[5], params[6]);
 	params[type] = status;
 	SetVehicleParamsEx(vehicleid, params[0], params[1], params[2], params[3], params[4], params[5], params[6]);
 }
 
-stock GetVehicleParams(vehicleid, vSync_VehicleParams:type)
-{
-	new params[7];
+stock VS_GetVehicleParams(vehicleid, vSync_VehicleParams:type) {
+	new bool:params[7];
 	GetVehicleParamsEx(vehicleid, params[0], params[1], params[2], params[3], params[4], params[5], params[6]);
-	return (!(params[type] <= 0));
+	if (params[type] != true) return false;
+	return true;
 }
-
 
 // ================================== [OTHER FUNCTIONS] ================================== //
-stock IsPlayerInsidePaySpray(playerid)
-{
-	for(new i = 0; i < sizeof(vSync_gPaynSprayPos); i++)
-    {
-        if(IsPlayerInRangeOfPoint(playerid, 10.0, vSync_gPaynSprayPos[i][0], vSync_gPaynSprayPos[i][1], vSync_gPaynSprayPos[i][2]))
-        {
-            return 1;
+stock VS_IsPlayerInsidePaySpray(playerid) {
+	for(new i = 0; i < sizeof(vSync_gPaynSprayPos); i++) {
+        if (IsPlayerInRangeOfPoint(playerid, 10.0, vSync_gPaynSprayPos[i][0], vSync_gPaynSprayPos[i][1], vSync_gPaynSprayPos[i][2])) {
+            return true;
         }
     }
-    return 0;
+    return false;
 }
 
-stock GetTickDiff(newtick, oldtick)
-{
-	if(oldtick < 0 && newtick >= 0)
-	{
+stock VS_GetTickDiff(newtick, oldtick) {
+	if (oldtick < 0 && newtick >= 0) {
 		return newtick - oldtick;
-	}
-	else if(oldtick >= 0 && newtick < 0 || oldtick > newtick)
-	{
+	} else if (oldtick >= 0 && newtick < 0 || oldtick > newtick) {
 		return (cellmax - oldtick + 1) - (cellmin - newtick);
 	}
 	return newtick - oldtick;
 }
 
-stock IsComponentFrontBullbar(componentid)
-{
-	for(new x = 0; x < 5; x++)
-	{
-		if(vSync_gVehFrontBullbars[x] == componentid)
-		{
-			return 1;
+stock VS_IsComponentFrontBullbar(componentid) {
+	for(new x = 0; x < 5; x++) {
+		if (vSync_gVehFrontBullbars[x] == componentid) {
+			return true;
 		}
 	}
-	return 0;
+	return false;
+}
+
+stock VS_GetComponentName(componentid) {
+	return vSync_Components[componentid][componentName];
+}
+
+stock VS_GetComponentPrice(componentid) {
+	return vSync_Components[componentid][componentPrice]; 
 }
