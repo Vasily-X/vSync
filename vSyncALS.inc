@@ -1,5 +1,6 @@
 /*
-    vSync v0.0.4 wrote by RIDE2DAY
+    vSync wrote by RIDE2DAY
+    Version 0.0.4 by Walkerxinho7
     Official thread: http://forum.sa-mp.com/showthread.php?t=642022
 
     Many thanks to:
