@@ -11,6 +11,9 @@ This include contains some bug fixes and new vehicle related functions.
 - Bullbar components won't use anymore the same slots as front/rear bumpers (`GetVehicleComponentInSlot`).
 - Now `GetVehicleComponentInSlot` works correctly when checking the `CARMODTYPE_STEREO` slot.
 - Players won't crash anymore if someone tries to add an invalid component to a vehicle.
+- The OnEnterExitModShop callback now returns `Y_HOOKS_CONTINUE_RETURN_1`.
+- `Neon` is now destroyed on both sides; previously, it was only destroyed on the left side.
+- Variables without the `vSync_` prefix now have this prefix to prevent errors.
 
 ## Features
 - Now Pay 'n' Spray shops apply random colors and call `OnVehicleRespray`.
@@ -19,6 +22,10 @@ This include contains some bug fixes and new vehicle related functions.
 - Two new vehicle component slots: `CARMODTYPE_FRONT_BULLBAR`, `CARMODTYPE_REAR_BULLBAR`. Check "Modified Functions" in the documentation.
 - Neon lights related functions (with offsets for all vehicles and Streamer support).
 - New functions and callbacks (check the documentation).
+- Now, the `vehicleid` callbacks include `IsValidVehicle` to check if the vehicle exists and avoid errors.
+- The `vSync_LegalMods` variable, which stores components, is now complete.
+- `Siren` variables are now of the Bool type.
+- All `returns` with a value of `0` or `1` have been changed to `booleans`, using `false` or `true`.
 
 ## External Links
 ##### Official SA-MP Forums thread
