@@ -13,7 +13,7 @@ This include contains some bug fixes and new vehicle related functions.
 - Players won't crash anymore if someone tries to add an invalid component to a vehicle.
 - Now, the `OnEnterExitModShop` hook returns `Y_HOOKS_CONTINUE_RETURN_1`. Previously, it used `return 1;`, but that is no longer the case.
 - The `Neon` system now destroys objects on both sides; previously, only the left side was destroyed.
-- Variables without the `vSync_` prefix now have Thais prefix to prevent erros.
+- Variables without the `vSync_` prefix now have prefix to prevent erros.
 
 ## Features
 - Now Pay 'n' Spray shops apply random colors and call `OnVehicleRespray`.
